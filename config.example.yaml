@@ -1,0 +1,60 @@
+# Copy to config.yaml and fill in real values (or reference env vars with
+# ${VAR_NAME} — they are expanded for auth_password, session_secret, and
+# each repo's username/token, so secrets don't have to live in this file).
+
+listen_addr: ":8080"
+data_dir: "./data"       # where local working clones are kept
+
+auth_password: "${GITMD_PASSWORD}"
+session_secret: "${GITMD_SESSION_SECRET}"   # any long random string
+
+repos:
+  - id: docs
+    name: "Product Docs"
+    url: "https://github.com/your-org/your-docs-repo.git"
+    branch: main
+    # GitHub fine-grained/PAT token: username is conventionally the token itself.
+    username: "x-access-token"
+    token: "${GITHUB_TOKEN}"
+    commit_name: "gitmd"
+    commit_email: "gitmd@yourcompany.example"
+    # type: plain (default) renders markdown with the built-in renderer.
+    # type: hugo instead runs the `hugo` binary against this repo and shows
+    # the real built site in the preview pane. Requires the repo to be an
+    # actual hugo site (hugo.toml/config.toml + content/ at its root) and
+    # the `hugo` binary to be on PATH (included in the Dockerfile).
+    type: plain
+
+  - id: wiki
+    name: "Internal Wiki"
+    url: "https://gitlab.com/your-group/wiki.git"
+    branch: main
+    # GitLab deploy token: username is the deploy token's name, e.g. gitlab+deploy-token-1.
+    username: "gitlab+deploy-token-1"
+    token: "${GITLAB_DEPLOY_TOKEN}"
+    commit_name: "gitmd"
+    commit_email: "gitmd@yourcompany.example"
+
+  - id: notes
+    name: "Team Notes (Gitea/Forgejo)"
+    url: "https://gitea.yourcompany.example/your-org/notes.git"
+    branch: main
+    # Gitea/Forgejo have no separate HTTP "deploy token" type like GitLab's;
+    # use a repo-scoped access token instead: Settings > Applications >
+    # Generate New Token (Gitea) or Settings > Applications (Forgejo), with
+    # at least "repo: read and write" scope. username is the account name
+    # the token belongs to (a dedicated bot/service account is recommended).
+    username: "gitmd-bot"
+    token: "${GITEA_TOKEN}"
+    commit_name: "gitmd"
+    commit_email: "gitmd@yourcompany.example"
+
+  - id: marketing-site
+    name: "Marketing Site (hugo)"
+    url: "https://github.com/your-org/marketing-site.git"
+    branch: main
+    username: "x-access-token"
+    token: "${GITHUB_TOKEN}"
+    commit_name: "gitmd"
+    commit_email: "gitmd@yourcompany.example"
+    type: hugo

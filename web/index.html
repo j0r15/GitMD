@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>gitmd</title>
+<link rel="stylesheet" href="/static/vendor/codemirror/codemirror.min.css">
+<link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+<div id="login-overlay" class="overlay overlay-login">
+  <form id="login-form" class="login-card">
+    <div class="login-brand"><span class="brand-mark">M↓</span> gitmd</div>
+    <p class="subtitle">Sign in to edit documentation</p>
+    <input type="password" id="login-password" placeholder="Password" autocomplete="current-password" autofocus required>
+    <button type="submit" class="btn btn-primary">Sign in</button>
+    <p id="login-error" class="error-text" hidden></p>
+  </form>
+</div>
+
+<div id="app" class="app" hidden>
+  <header class="topbar">
+    <button id="btn-sidebar" class="icon-btn" title="Toggle file list (Ctrl+\)" aria-label="Toggle file list">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4h12M2 8h12M2 12h12"/></svg>
+    </button>
+    <div class="brand"><span class="brand-mark">M↓</span> gitmd</div>
+
+    <div id="view-modes" class="view-modes" role="group" aria-label="View mode">
+      <button data-mode="edit" title="Edit (Ctrl+Alt+E)" aria-label="Edit only">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M11 2.5l2.5 2.5L5.5 13H3v-2.5z"/></svg>
+      </button>
+      <button data-mode="both" title="Both (Ctrl+Alt+B)" aria-label="Edit and preview">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="3" width="12" height="10" rx="1.5"/><path d="M8 3v10"/></svg>
+      </button>
+      <button data-mode="view" title="View (Ctrl+Alt+V)" aria-label="Preview only">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1.5 8S4 3.5 8 3.5 14.5 8 14.5 8 12 12.5 8 12.5 1.5 8 1.5 8z"/><circle cx="8" cy="8" r="2"/></svg>
+      </button>
+    </div>
+
+    <div class="doc-title">
+      <span id="current-path" class="current-path"></span>
+      <span id="dirty-dot" class="dirty-dot" title="Unsaved changes" hidden></span>
+    </div>
+
+    <span id="status-msg" class="status-msg"></span>
+    <button id="btn-save" class="btn btn-primary" title="Commit and push (Ctrl+S)" disabled>Save</button>
+    <button id="btn-logout" class="btn btn-ghost">Log out</button>
+  </header>
+
+  <div class="body">
+    <aside id="sidebar" class="sidebar">
+      <div class="sidebar-head">
+        <select id="repo-select" title="Repository"></select>
+        <span id="repo-branch" class="repo-branch" title="Branch"></span>
+        <button id="btn-new" class="btn btn-small btn-outline" title="New file">+ New</button>
+      </div>
+      <ul id="file-tree" class="file-tree"></ul>
+    </aside>
+
+    <main class="editor-area">
+      <div id="empty-state" class="empty-state">
+        <div class="empty-card">
+          <span class="brand-mark big">M↓</span>
+          <p>Pick a note from the sidebar, or create a new one.</p>
+        </div>
+      </div>
+      <div id="panes" class="panes" data-mode="both" hidden>
+        <div class="pane pane-edit">
+          <div id="source-toolbar" class="source-toolbar" role="toolbar" aria-label="Formatting">
+            <button type="button" data-cmd="bold" title="Bold (Ctrl+B)"><b>B</b></button>
+            <button type="button" data-cmd="italic" title="Italic (Ctrl+I)"><i>i</i></button>
+            <button type="button" data-cmd="strike" title="Strikethrough"><s>S</s></button>
+            <span class="toolbar-sep"></span>
+            <button type="button" data-cmd="h1" title="Heading 1">H1</button>
+            <button type="button" data-cmd="h2" title="Heading 2">H2</button>
+            <button type="button" data-cmd="h3" title="Heading 3">H3</button>
+            <span class="toolbar-sep"></span>
+            <button type="button" data-cmd="quote" title="Blockquote">&rdquo;</button>
+            <button type="button" data-cmd="code" title="Inline code">&lt;/&gt;</button>
+            <button type="button" data-cmd="ul" title="Bullet list">&bull; —</button>
+            <button type="button" data-cmd="ol" title="Numbered list">1. —</button>
+            <span class="toolbar-sep"></span>
+            <button type="button" data-cmd="link" title="Link">🔗</button>
+            <button type="button" data-cmd="image" title="Image">🖼</button>
+            <button type="button" data-cmd="hr" title="Horizontal rule">―</button>
+            <span class="toolbar-sep"></span>
+            <div class="table-picker-wrap">
+              <button type="button" id="btn-table" title="Insert table" aria-label="Insert table">
+                <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="3" width="12" height="10" rx="1"/><path d="M2 6.5h12M2 10h12M6.5 3v10M10.5 3v10"/></svg>
+              </button>
+              <div id="table-picker" class="table-picker" hidden>
+                <div id="table-grid" class="table-grid"></div>
+                <div id="table-picker-label" class="table-picker-label">Insert table</div>
+              </div>
+            </div>
+            <span class="toolbar-sep"></span>
+            <button type="button" data-cmd="undo" title="Undo (Ctrl+Z)">↺</button>
+            <button type="button" data-cmd="redo" title="Redo (Ctrl+Shift+Z)">↻</button>
+          </div>
+          <div class="pane-edit-cm"><textarea id="editor"></textarea></div>
+          <div class="statusbar">
+            <span id="sb-cursor">Line 1, Column 1</span>
+            <span id="sb-lines"></span>
+            <span class="spacer"></span>
+            <span id="sb-words"></span>
+            <span class="sb-tag">Markdown</span>
+          </div>
+        </div>
+        <div id="pane-preview" class="pane pane-preview">
+          <div id="preview" class="markdown-body"></div>
+          <iframe id="preview-frame" class="preview-frame" title="Site preview" hidden></iframe>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div id="modal-overlay" class="overlay" hidden>
+  <div class="modal-card">
+    <h2 id="modal-title">New file</h2>
+    <input type="text" id="modal-input" placeholder="path/to/file.md">
+    <p id="modal-error" class="error-text" hidden></p>
+    <div class="modal-actions">
+      <button id="modal-cancel" class="btn btn-ghost-dark">Cancel</button>
+      <button id="modal-confirm" class="btn btn-primary">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script src="/static/vendor/codemirror/codemirror.min.js"></script>
+<script src="/static/vendor/codemirror/mode/xml/xml.min.js"></script>
+<script src="/static/vendor/codemirror/mode/javascript/javascript.min.js"></script>
+<script src="/static/vendor/codemirror/mode/css/css.min.js"></script>
+<script src="/static/vendor/codemirror/mode/markdown/markdown.min.js"></script>
+<script src="/static/vendor/codemirror/addon/display/placeholder.min.js"></script>
+<script src="/static/vendor/markdown-it.min.js"></script>
+<script src="/static/js/app.js"></script>
+</body>
+</html>
