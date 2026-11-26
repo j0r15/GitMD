@@ -1,4 +1,4 @@
-# gitmd
+# GitMD
 
 A small, self-hosted web editor for Markdown docs that live in a git
 repository — looks and feels like HackMD/HedgeDoc (split edit/preview,
