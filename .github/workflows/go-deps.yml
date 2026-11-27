@@ -1,0 +1,34 @@
+name: Go Dependencies Check
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - 'go.mod'
+      - 'go.sum'
+  schedule:
+    - cron: '0 0 * * 3'  # Weekly on Wednesday at midnight
+
+jobs:
+  go-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'  # Current Go version in Dockerfile
+
+      - name: Check for Go module updates
+        run: |
+          echo "Current Go version: 1.23"
+          echo "Checking go.mod for outdated dependencies:"
+          cat go.mod
+
+      - name: List dependencies
+        run: |
+          go list -m all

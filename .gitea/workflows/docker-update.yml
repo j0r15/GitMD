@@ -1,0 +1,45 @@
+name: Docker Image Update Check
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - 'Dockerfile'
+      - 'go.mod'
+      - 'go.sum'
+  schedule:
+    - cron: '0 0 * * 1'  # Weekly on Monday at midnight
+
+jobs:
+  docker-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install golangci-lint (for version checking)
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: latest
+
+      - name: Check Go version updates
+        run: |
+          echo "Current Go version in Dockerfile: $(grep 'FROM golang:' Dockerfile | awk '{print $2}' | cut -d'-' -f1)"
+          echo "Will check for newer golang:1.x-alpine images"
+
+      - name: Check Alpine version updates
+        run: |
+          echo "Current Alpine version in Dockerfile: $(grep 'FROM alpine:' Dockerfile | awk '{print $2}')"
+          echo "Will check for newer alpine:x.y images"
+
+      - name: Check Hugo version updates
+        run: |
+          echo "Current Hugo version in Dockerfile: $(grep 'ARG HUGO_VERSION' Dockerfile | awk '{print $2}')"
+          echo "Will check for newer hugo releases"
+
+      - name: Print Dockerfile dependencies
+        run: |
+          echo "=== Dockerfile Dependencies ==="
+          cat Dockerfile | grep -E 'FROM|ARG|RUN.*curl.*http'

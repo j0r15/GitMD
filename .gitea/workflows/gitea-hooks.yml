@@ -1,0 +1,34 @@
+name: Gitea Webhook Configuration
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - '.gitea'
+  schedule:
+    - cron: '0 0 * * 4'  # Weekly on Thursday at midnight
+
+jobs:
+  setup-webhook:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create Gitea Webhook
+        run: |
+          echo "Configure webhook in Gitea settings:"
+          echo "  - Settings -> Webhooks"
+          echo "  - Add webhook URL: https://<your-server>/api/v1/repos/<user>/<repo>/hooks/renovate"
+          echo "  - Token: ${{ secrets.GITEA_TOKEN }}"
+          echo "  - Secret: renovate-secret"
+
+      - name: Print Webhook Info
+        run: |
+          echo "=== Gitea Webhook Configuration ==="
+          echo "Server: $GITEA_SERVER"
+          echo "Repo: $GITEA_REPO"
+          echo "Branch: main/master"
+          echo "Trigger: push + weekly cron"

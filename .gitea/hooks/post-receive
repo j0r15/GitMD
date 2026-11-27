@@ -1,0 +1,45 @@
+#!/bin/bash
+# Gitea post-receive hook to trigger Renovate after push
+
+REPO_ROOT=$(dirname $(dirname $(dirname $(readlink -f "$0"))))
+WORKTREE_DIR="$REPO_ROOT"
+
+# Read the pushed ref
+REF=$(git update-ref --format '%(ref:refs/%(refname:short))' 2>/dev/null || echo "main")
+
+# Only run Renovate on main/master branches
+if [[ "$REF" =~ ^refs/heads/(main|master)$ ]]; then
+    echo "Post-receive hook triggered for $REF branch"
+    
+    # Get the remote name for the default remote
+    REMOTE=$(git remote show origin 2>/dev/null | grep "HEAD branch" | awk '{print $3}' || echo "")
+    if [[ -z "$REMOTE" ]]; then
+        REMOTE=$(git config --get remote.origin.url | sed 's|/[^/]*$||')
+    fi
+    
+    # Set environment variables (configure these in Gitea settings or .env)
+    export GITEA_SERVER="${GITEA_SERVER:-https://gitea.example.com}"
+    export GITEA_REPO="${GITEA_REPO:-gitmd}"
+    export GITEA_TOKEN="${GITEA_TOKEN:-your-token}"
+    export GITEA_USER="${GITEA_USER:-your-username}"
+    export GITEA_EMAIL="${GITEA_EMAIL:-you@example.com}"
+    
+    # Create a webhook to trigger Renovate
+    WEBHOOK_URL="${GITEA_SERVER}/api/v1/repos/${GITEA_USER}/${GITEA_REPO}/hooks"
+    
+    echo "Triggering webhook at $WEBHOOK_URL"
+    
+    # Create a webhook payload to trigger Renovate
+    PAYLOAD='{
+        "ref": "refs/heads/'"$REF"'"
+    }'
+    
+    # Create a new webhook if it doesn't exist, or trigger an existing one
+    curl -X POST "$WEBHOOK_URL" \
+        -H "Accept: application/json" \
+        -H "Content-Type: application/json" \
+        -H "Authorization: Bearer $GITEA_TOKEN" \
+        -d "$PAYLOAD" 2>/dev/null || true
+    
+    echo "Post-receive hook completed"
+fi

@@ -1,0 +1,34 @@
+name: Renovate Dependencies
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  schedule:
+    - cron: '0 0 * * 0'  # Weekly on Sunday at midnight
+
+jobs:
+  renovate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Renovate
+        run: npm install -g renovate
+
+      - name: Run Renovate
+        run: |
+          export GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
+          export GITHUB_USER=${{ secrets.GITHUB_USER }}
+          export GITHUB_EMAIL=${{ secrets.GITHUB_EMAIL }}
+          renovate --config="renovate.json" schedule
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check for PRs created
+        run: |
+          echo "Renovate has completed. Check the GitHub UI for created PRs."

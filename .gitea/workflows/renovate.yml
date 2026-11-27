@@ -1,0 +1,40 @@
+name: Renovate Dependencies
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  schedule:
+    - cron: '0 0 * * 0'  # Weekly on Sunday at midnight
+
+jobs:
+  renovate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Renovate
+        run: npm install -g renovate
+
+      - name: Run Renovate
+        run: |
+          export GITEA_TOKEN=${{ secrets.GITEA_TOKEN }}
+          export GITEA_USER=${{ secrets.GITEA_USER }}
+          export GITEA_EMAIL=${{ secrets.GITEA_EMAIL }}
+          export GITEA_SERVER=${{ secrets.GITEA_SERVER }}
+          export GITEA_REPO=${{ secrets.GITEA_REPO }}
+          renovate --config="renovate.json" schedule
+        env:
+          GITEA_TOKEN: ${{ secrets.GITEA_TOKEN }}
+          GITEA_USER: ${{ secrets.GITEA_USER }}
+          GITEA_EMAIL: ${{ secrets.GITEA_EMAIL }}
+          GITEA_SERVER: ${{ secrets.GITEA_SERVER }}
+          GITEA_REPO: ${{ secrets.GITEA_REPO }}
+
+      - name: Check for PRs created
+        run: |
+          echo "Renovate has completed. Check the Gitea UI for created PRs."

@@ -1,3 +1,9 @@
 /gitmd
 /data/
 /config.yaml
+
+# Renovate
+renovate.json
+renovate.json5
+renovate.lock
+renovate-config.*
